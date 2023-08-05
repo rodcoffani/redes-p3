@@ -40,4 +40,4 @@ Sempre que o TTL chegar a zero, além de descartar o datagrama, gere uma mensage
 
 ## Adiante o seu T5!
 
-O arquivo `exemplo_integracao.py` complementa o do trabalho anterior, colocando a implementação do protocolo IP que você construiu no lugar da implementação do Linux. Caso você tenha feito todos os trabalhos anteriores, tente portá-los para usar a implementação do IP que você acabou de construir.
+O arquivo `exemplo_integracao.py` complementa o do trabalho anterior, colocando a implementação do protocolo IP que você construiu no lugar da implementação do Linux. Caso você tenha feito todos os trabalhos anteriores, tente portá-los para usar a implementação do IP que você acabou de construir
