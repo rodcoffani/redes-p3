@@ -37,13 +37,23 @@ class IP:
         # Constroi um objeto ip_address a partir da string dest_addr
         dst_address = ip_address(dest_addr)
 
+        # Next hop com o prefixo mais longo
+        max_next_hop = None
+
         for cidr, next_hop in self.tabela:
             # Constroi um objeto ip_network a partir da string cidr 
             net = ip_network(cidr)
 
             # Verifica se o endereço de destino de destino está na rede
             if dst_address in net:
-                return next_hop
+                # Se é o primeiro next_hop encontrado, ou se o prefixo é maior que o anterior
+                if max_next_hop is None or net.prefixlen > max_next_hop[0].prefixlen:
+                    max_next_hop = (net, next_hop)
+
+        # Se encontrou o next_hop, retorna o endereço
+        if max_next_hop:
+            return max_next_hop[1]               
+                
 
         # Se não encontrar o next_hop, retorna None
         return None
