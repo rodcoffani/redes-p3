@@ -1,5 +1,5 @@
 from iputils import *
-from ipaddress import ip_address, ip_network
+from ipaddress import ip_address, ip_network, IPv4Address
 
 
 class IP:
@@ -87,4 +87,59 @@ class IP:
         next_hop = self._next_hop(dest_addr)
         # TODO: Assumindo que a camada superior é o protocolo TCP, monte o
         # datagrama com o cabeçalho IP, contendo como payload o segmento.
+
+        # Variáveis do cabeçalho
+        version = 4
+        ihl = 5
+        dscp = 0
+        ecn = 0
+        total_length = 20 + len(segmento)
+        identification = 0
+        flags = 0
+        frag_offset = 0
+        ttl = 64
+        proto = IPPROTO_TCP
+        checksum = 0        
+        
+        # Endereços de origem e destino
+        src_addr = IPv4Address(self.meu_endereco)
+        dest_address = IPv4Address(dest_addr)
+
+        # Monta o cabeçalho
+        header = (
+            (version << 4) + ihl,
+            (dscp << 2) + ecn,
+            total_length,
+            identification,
+            (flags << 13) + frag_offset,
+            ttl,
+            proto,
+            checksum,
+            int(src_addr),
+            int(dest_address)
+        )
+
+        # Monta o datagrama
+        packed_header = struct.pack('!BBHHHBBHII', *header)
+
+        # Calcula o checksum
+        checksum = calc_checksum(packed_header)
+        header = (
+            (version << 4) + ihl,
+            (dscp << 2) + ecn,
+            total_length,
+            identification,
+            (flags << 13) + frag_offset,
+            ttl,
+            proto,
+            checksum,
+            int(src_addr),
+            int(dest_address)
+        )
+
+        # Monta o datagrama (de novo, agora com o checksum)
+        packed_header = struct.pack('!BBHHHBBHII', *header)
+
+        datagrama = packed_header + segmento
+
         self.enlace.enviar(datagrama, next_hop)
