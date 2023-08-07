@@ -36,14 +36,67 @@ class IP:
             total_length = 20 + len(payload)
             ttl = ttl - 1
             checksum = 0
-
-            # Se o ttl chegar a 0, descarta o pacote
-            if ttl == 0:
-                return
-
             # Endereços de origem e destino
             src_address = IPv4Address(src_addr)
             dest_address = IPv4Address(dst_addr)
+
+            # Se o ttl chegar a 0, descarta o pacote
+            if ttl == 0:
+                next_hop2 = self._next_hop(src_addr)
+                # Gerar e enviar um erro ICMP (Time Exceeded)
+
+                # IP Header of the original datagram
+                header_errado = (
+                    (version << 4) + ihl, # 0
+                    (dscp << 2) + ecn, # 1
+                    48, # 2 (length)
+                    identification, # 3
+                    (flags << 13) + frag_offset, # 4
+                    64, # 5 (ttl)
+                    IPPROTO_ICMP, # 6 (proto)
+                    0, # 7
+                    int(ip_address(self.meu_endereco)), # 8
+                    int(src_address) # 9
+                )
+                packed_errado = struct.pack('!BBHHHBBHII', *header_errado)
+                checksum1 = calc_checksum(packed_errado)
+                header_errado = (
+                    (version << 4) + ihl, # 0
+                    (dscp << 2) + ecn, # 1
+                    48, # 2 (length)
+                    identification, # 3
+                    (flags << 13) + frag_offset, # 4
+                    64, # 5 (ttl)
+                    IPPROTO_ICMP, # 6 (proto)
+                    checksum1, # 7
+                    int(ip_address(self.meu_endereco)), # 8
+                    int(src_address) # 9
+                )
+                packed_errado = struct.pack('!BBHHHBBHII', *header_errado)
+
+                # ICMP Header
+                icmp_header = (
+                    11, # type
+                    0, # code
+                    0, # checksum
+                    0, # unused
+                    0, # unused
+
+                )
+                packed_icmp = struct.pack('!BBHHH', *icmp_header)
+                checksum2 = calc_checksum(packed_icmp + packed_errado)
+                icmp_header = (
+                    11, # type
+                    0, # code
+                    checksum2, # checksum
+                    0, # unused
+                    0, # unused
+                )
+                packed_icmp = struct.pack('!BBHHH', *icmp_header)
+
+                self.enlace.enviar(packed_errado + packed_icmp + datagrama[:28], next_hop2)
+                return
+
 
             # Monta o cabeçalho
             header = (
@@ -168,7 +221,7 @@ class IP:
         checksum = 0        
         
         # Endereços de origem e destino
-        src_addr = IPv4Address(self.meu_endereco)
+        src_address = IPv4Address(self.meu_endereco)
         dest_address = IPv4Address(dest_addr)
 
         # Monta o cabeçalho
@@ -181,7 +234,7 @@ class IP:
             ttl, # 5
             proto, # 6
             checksum, # 7
-            int(src_addr), # 8
+            int(src_address), # 8
             int(dest_address) # 9
         )
 
@@ -199,7 +252,7 @@ class IP:
             ttl,
             proto,
             checksum,
-            int(src_addr),
+            int(src_address),
             int(dest_address)
         )
 
