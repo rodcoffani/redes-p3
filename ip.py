@@ -27,6 +27,62 @@ class IP:
             # atua como roteador
             next_hop = self._next_hop(dst_addr)
             # TODO: Trate corretamente o campo TTL do datagrama
+
+            # Funciona (BEM) parecido com a função self.enviar
+
+            # Variáveis (faltantes) do cabeçalho ip
+            version = 4
+            ihl = 5
+            total_length = 20 + len(payload)
+            ttl = ttl - 1
+            checksum = 0
+
+            # Se o ttl chegar a 0, descarta o pacote
+            if ttl == 0:
+                return
+
+            # Endereços de origem e destino
+            src_address = IPv4Address(src_addr)
+            dest_address = IPv4Address(dst_addr)
+
+            # Monta o cabeçalho
+            header = (
+                (version << 4) + ihl, # 0
+                (dscp << 2) + ecn, # 1
+                total_length, # 2
+                identification, # 3
+                (flags << 13) + frag_offset, # 4
+                ttl, # 5
+                proto, # 6
+                checksum, # 7
+                int(src_address), # 8
+                int(dest_address) # 9
+            )
+            
+            # Monta o datagrama
+            packed_header = struct.pack('!BBHHHBBHII', *header)
+
+            # Calcula o checksum
+            checksum = calc_checksum(packed_header)
+
+            # Monta o cabeçalho
+            header = (
+                (version << 4) + ihl, # 0
+                (dscp << 2) + ecn, # 1
+                total_length, # 2
+                identification, # 3
+                (flags << 13) + frag_offset, # 4
+                ttl, # 5
+                proto, # 6
+                checksum, # 7
+                int(src_address), # 8
+                int(dest_address) # 9
+            )
+
+            packed_header = struct.pack('!BBHHHBBHII', *header)
+
+            datagrama = packed_header + payload
+
             self.enlace.enviar(datagrama, next_hop)
 
     def _next_hop(self, dest_addr):
@@ -117,16 +173,16 @@ class IP:
 
         # Monta o cabeçalho
         header = (
-            (version << 4) + ihl,
-            (dscp << 2) + ecn,
-            total_length,
-            identification,
-            (flags << 13) + frag_offset,
-            ttl,
-            proto,
-            checksum,
-            int(src_addr),
-            int(dest_address)
+            (version << 4) + ihl, # 0
+            (dscp << 2) + ecn, # 1
+            total_length, # 2
+            identification, # 3
+            (flags << 13) + frag_offset, # 4
+            ttl, # 5
+            proto, # 6
+            checksum, # 7
+            int(src_addr), # 8
+            int(dest_address) # 9
         )
 
         # Monta o datagrama
